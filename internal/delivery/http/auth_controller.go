@@ -28,13 +28,11 @@ func NewAuthController(
 func (c *AuthController) Login(ctx *fiber.Ctx) error {
 	request := new(model.AuthLoginRequest)
 	if err := ctx.BodyParser(request); err != nil {
-		c.Log.Warnf("Failed to parse request body : %+v", err)
 		return fiber.ErrBadRequest
 	}
 
 	response, err := c.AuthUsecase.Login(ctx.UserContext(), request)
 	if err != nil {
-		c.Log.Warnf("Failed to login : %+v", err)
 		return err
 	}
 
@@ -49,7 +47,6 @@ func (c *AuthController) Logout(ctx *fiber.Ctx) error {
 	}
 
 	if err := c.AuthUsecase.Logout(ctx.UserContext(), request); err != nil {
-		c.Log.Warnf("Failed to logout : %+v", err)
 		return err
 	}
 
@@ -59,12 +56,10 @@ func (c *AuthController) Logout(ctx *fiber.Ctx) error {
 func (c *AuthController) SignUp(ctx *fiber.Ctx) error {
 	request := new(model.AuthSignUpRequest)
 	if err := ctx.BodyParser(request); err != nil {
-		c.Log.Warnf("Failed to parse request body : %+v", err)
 		return fiber.ErrBadRequest
 	}
 
 	if err := c.AuthUsecase.SignUp(ctx.UserContext(), request); err != nil {
-		c.Log.Warnf("Failed to sign up : %+v", err)
 		return err
 	}
 

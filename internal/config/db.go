@@ -19,7 +19,6 @@ func NewDB(log *logrus.Logger) *gorm.DB {
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, database)
 
 	db, err := gorm.Open(postgres.Open(dsn))
-	// db = db.Debug()
 	if err != nil {
 		log.Fatalf("failed to connect database: %v", err)
 	}

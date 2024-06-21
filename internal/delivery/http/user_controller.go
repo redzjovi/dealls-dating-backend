@@ -30,7 +30,6 @@ func (c *UserProfileController) Find(ctx *fiber.Ctx) error {
 
 	response, err := c.UserProfileUsecase.Find(ctx.UserContext(), auth.ID)
 	if err != nil {
-		c.Log.Warnf("Failed to find user profile : %+v", err)
 		return err
 	}
 
@@ -42,12 +41,10 @@ func (c *UserProfileController) Update(ctx *fiber.Ctx) error {
 
 	request := new(model.UpdateUserProfileRequest)
 	if err := ctx.BodyParser(request); err != nil {
-		c.Log.Warnf("Failed to parse request body : %+v", err)
 		return fiber.ErrBadRequest
 	}
 
 	if err := c.UserProfileUsecase.Update(ctx.UserContext(), auth.ID, request); err != nil {
-		c.Log.Warnf("Failed to update user profile : %+v", err)
 		return err
 	}
 

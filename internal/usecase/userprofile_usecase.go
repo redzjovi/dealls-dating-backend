@@ -34,32 +34,35 @@ func NewUserProfileUsecase(
 	}
 }
 
-func (c *UserProfileUsecase) Find(ctx context.Context, userId uint) (*model.UserProfileResponse, error) {
-	tx := c.DB.WithContext(ctx).Begin()
+func (u *UserProfileUsecase) Find(ctx context.Context, userId uint) (*model.UserProfileResponse, error) {
+	tx := u.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
 	userProfile := new(entity.UserProfile)
-	if err := c.UserProfileRepository.FindByUserId(tx, userProfile, userId); err != nil {
-		c.Log.Warnf("Failed find user by id : %+v", err)
-		return nil, fiber.ErrNotFound
+	if err := u.UserProfileRepository.FindByUserId(tx, userProfile, userId); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, fiber.ErrNotFound
+		}
+		u.Log.Warnf("Failed find user by id : %+v", err)
+		return nil, fiber.ErrInternalServerError
 	}
 
 	return converter.UserProfileToResponse(userProfile), nil
 }
 
-func (c *UserProfileUsecase) Update(ctx context.Context, userId uint, request *model.UpdateUserProfileRequest) error {
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
+func (u *UserProfileUsecase) Update(ctx context.Context, userId uint, request *model.UpdateUserProfileRequest) error {
+	if err := u.Validate.Struct(request); err != nil {
+		u.Log.Warnf("Invalid request body : %+v", err)
 		return fiber.ErrBadRequest
 	}
 
-	tx := c.DB.WithContext(ctx).Begin()
+	tx := u.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
 	userProfile := new(entity.UserProfile)
-	if err := c.UserProfileRepository.FindByUserId(tx, userProfile, userId); err != nil && err != gorm.ErrRecordNotFound {
-		c.Log.Warnf("Failed find user by id : %+v", err)
-		return fiber.ErrNotFound
+	if err := u.UserProfileRepository.FindByUserId(tx, userProfile, userId); err != nil && err != gorm.ErrRecordNotFound {
+		u.Log.Warnf("Failed find user by id : %+v", err)
+		return fiber.ErrInternalServerError
 	}
 
 	userProfile.UserId = userId
@@ -67,13 +70,13 @@ func (c *UserProfileUsecase) Update(ctx context.Context, userId uint, request *m
 	userProfile.Name = request.Name
 	userProfile.PictureURL = request.PictureURL
 
-	if err := c.UserProfileRepository.Update(tx, userProfile); err != nil {
-		c.Log.Warnf("Failed save user profile : %+v", err)
+	if err := u.UserProfileRepository.Update(tx, userProfile); err != nil {
+		u.Log.Warnf("Failed save user profile : %+v", err)
 		return fiber.ErrInternalServerError
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed commit transaction : %+v", err)
+		u.Log.Warnf("Failed commit transaction : %+v", err)
 		return fiber.ErrInternalServerError
 	}
 

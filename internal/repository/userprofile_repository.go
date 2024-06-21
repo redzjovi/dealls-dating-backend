@@ -14,6 +14,6 @@ func NewUserProfileRepository() *UserProfileRepository {
 	return &UserProfileRepository{}
 }
 
-func (u *UserProfileRepository) FindByUserId(db *gorm.DB, entity *entity.UserProfile, userId uint) error {
+func (r *UserProfileRepository) FindByUserId(db *gorm.DB, entity *entity.UserProfile, userId uint) error {
 	return db.Where("user_id = ?", userId).Take(entity).Error
 }

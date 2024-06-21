@@ -35,34 +35,36 @@ func NewAuthUsecase(
 	}
 }
 
-func (c *AuthUsecase) Login(ctx context.Context, request *model.AuthLoginRequest) (*model.AuthLoginResponse, error) {
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body  : %+v", err)
+func (u *AuthUsecase) Login(ctx context.Context, request *model.AuthLoginRequest) (*model.AuthLoginResponse, error) {
+	if err := u.Validate.Struct(request); err != nil {
+		u.Log.Infof("Invalid request body  : %+v", err)
 		return nil, fiber.ErrBadRequest
 	}
 
-	tx := c.DB.WithContext(ctx).Begin()
+	tx := u.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
 	user := new(entity.User)
-	if err := c.UserRepository.FindByEmail(tx, user, request.Email); err != nil {
-		c.Log.Warnf("Failed find user by id : %+v", err)
-		return nil, fiber.ErrUnauthorized
+	if err := u.UserRepository.FindByEmail(tx, user, request.Email); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, fiber.ErrUnauthorized
+		}
+		u.Log.Warnf("Failed find user by id : %+v", err)
+		return nil, fiber.ErrInternalServerError
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password)); err != nil {
-		c.Log.Warnf("Failed to compare user password with bcrype hash : %+v", err)
 		return nil, fiber.ErrUnauthorized
 	}
 
 	user.Token = uuid.New().String()
-	if err := c.UserRepository.Update(tx, user); err != nil {
-		c.Log.Warnf("Failed save user : %+v", err)
+	if err := u.UserRepository.Update(tx, user); err != nil {
+		u.Log.Warnf("Failed save user : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed commit transaction : %+v", err)
+		u.Log.Warnf("Failed commit transaction : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 
@@ -71,59 +73,61 @@ func (c *AuthUsecase) Login(ctx context.Context, request *model.AuthLoginRequest
 	}, nil
 }
 
-func (c *AuthUsecase) Logout(ctx context.Context, request *model.AuthLogoutRequest) error {
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
+func (u *AuthUsecase) Logout(ctx context.Context, request *model.AuthLogoutRequest) error {
+	if err := u.Validate.Struct(request); err != nil {
+		u.Log.Warnf("Invalid request body : %+v", err)
 		return fiber.ErrBadRequest
 	}
 
-	tx := c.DB.WithContext(ctx).Begin()
+	tx := u.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
 	user := new(entity.User)
-	if err := c.UserRepository.FindById(tx, user, request.ID); err != nil {
-		c.Log.Warnf("Failed find user by id : %+v", err)
-		return fiber.ErrNotFound
+	if err := u.UserRepository.FindById(tx, user, request.ID); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return fiber.ErrNotFound
+		}
+		u.Log.Warnf("Failed find user by id : %+v", err)
+		return fiber.ErrInternalServerError
 	}
 
 	user.Token = ""
 
-	if err := c.UserRepository.Update(tx, user); err != nil {
-		c.Log.Warnf("Failed save user : %+v", err)
+	if err := u.UserRepository.Update(tx, user); err != nil {
+		u.Log.Warnf("Failed save user : %+v", err)
 		return fiber.ErrInternalServerError
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed commit transaction : %+v", err)
+		u.Log.Warnf("Failed commit transaction : %+v", err)
 		return fiber.ErrInternalServerError
 	}
 
 	return nil
 }
 
-func (c *AuthUsecase) SignUp(ctx context.Context, request *model.AuthSignUpRequest) error {
-	if err := c.Validate.Struct(request); err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
+func (u *AuthUsecase) SignUp(ctx context.Context, request *model.AuthSignUpRequest) error {
+	if err := u.Validate.Struct(request); err != nil {
+		u.Log.Warnf("Invalid request body : %+v", err)
 		return fiber.ErrBadRequest
 	}
 
-	tx := c.DB.WithContext(ctx).Begin()
+	tx := u.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
-	total, err := c.UserRepository.CountByEmail(tx, request.Email)
+	total, err := u.UserRepository.CountByEmail(tx, request.Email)
 	if err != nil {
-		c.Log.Warnf("Failed count user by email : %+v", err)
+		u.Log.Warnf("Failed count user by email : %+v", err)
 		return fiber.ErrInternalServerError
 	}
 
 	if total > 0 {
-		c.Log.Warnf("User already exist : %+v", err)
 		return fiber.ErrConflict
 	}
 
 	password, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
 	if err != nil {
-		c.Log.Warnf("Failed to generate bcrype hash : %+v", err)
+		u.Log.Warnf("Failed to generate bcrype hash : %+v", err)
 		return fiber.ErrInternalServerError
 	}
 
@@ -132,37 +136,40 @@ func (c *AuthUsecase) SignUp(ctx context.Context, request *model.AuthSignUpReque
 		Password: string(password),
 	}
 
-	if err := c.UserRepository.Create(tx, user); err != nil {
-		c.Log.Warnf("Failed create user : %+v", err)
+	if err := u.UserRepository.Create(tx, user); err != nil {
+		u.Log.Warnf("Failed create user : %+v", err)
 		return fiber.ErrInternalServerError
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed commit transaction : %+v", err)
+		u.Log.Warnf("Failed commit transaction : %+v", err)
 		return fiber.ErrInternalServerError
 	}
 
 	return nil
 }
 
-func (c *AuthUsecase) Verify(ctx context.Context, request *model.AuthVerifyRequest) (*model.Auth, error) {
-	err := c.Validate.Struct(request)
+func (u *AuthUsecase) Verify(ctx context.Context, request *model.AuthVerifyRequest) (*model.Auth, error) {
+	err := u.Validate.Struct(request)
 	if err != nil {
-		c.Log.Warnf("Invalid request body : %+v", err)
+		u.Log.Warnf("Invalid request body : %+v", err)
 		return nil, fiber.ErrBadRequest
 	}
 
-	tx := c.DB.WithContext(ctx).Begin()
+	tx := u.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
 	user := new(entity.User)
-	if err := c.UserRepository.FindByToken(tx, user, request.Token); err != nil {
-		c.Log.Warnf("Failed find user by token : %+v", err)
-		return nil, fiber.ErrNotFound
+	if err := u.UserRepository.FindByToken(tx, user, request.Token); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, fiber.ErrNotFound
+		}
+		u.Log.Warnf("Failed find user by token : %+v", err)
+		return nil, fiber.ErrInternalServerError
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		c.Log.Warnf("Failed commit transaction : %+v", err)
+		u.Log.Warnf("Failed commit transaction : %+v", err)
 		return nil, fiber.ErrInternalServerError
 	}
 

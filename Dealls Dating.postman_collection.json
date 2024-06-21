@@ -132,6 +132,133 @@
 								}
 							},
 							"response": []
+						},
+						{
+							"name": "Find Swipe",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    pm.collectionVariables.set(\"swipeUserId\", pm.response.json().data.user_id)",
+											"}"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{authUserToken}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{apiUrl}}/auth/user/swipe",
+									"host": [
+										"{{apiUrl}}"
+									],
+									"path": [
+										"auth",
+										"user",
+										"swipe"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Like Swipe",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{authUserToken}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{apiUrl}}/auth/user/swipe/:user_id",
+									"host": [
+										"{{apiUrl}}"
+									],
+									"path": [
+										"auth",
+										"user",
+										"swipe",
+										":user_id"
+									],
+									"variable": [
+										{
+											"key": "user_id",
+											"value": "{{swipeUserId}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Dislike Swipe",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{authUserToken}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{apiUrl}}/auth/user/swipe/:user_id",
+									"host": [
+										"{{apiUrl}}"
+									],
+									"path": [
+										"auth",
+										"user",
+										"swipe",
+										":user_id"
+									],
+									"variable": [
+										{
+											"key": "user_id",
+											"value": "{{swipeUserId}}"
+										}
+									]
+								}
+							},
+							"response": []
 						}
 					]
 				},
@@ -266,6 +393,10 @@
 		},
 		{
 			"key": "authUserToken",
+			"value": ""
+		},
+		{
+			"key": "swipeUserId",
 			"value": ""
 		}
 	]

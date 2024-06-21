@@ -22,15 +22,19 @@ type BootstrapConfig struct {
 
 func Bootstrap(config *BootstrapConfig) {
 	// setup repositories
+	matchRepository := repository.NewMatchRepository()
+	swipeRepository := repository.NewSwipeRepository()
 	userProfileRepository := repository.NewUserProfileRepository()
 	userRepository := repository.NewUserRepository()
 
 	// setup use cases
 	authUsecase := usecase.NewAuthUsecase(config.DB, config.Log, userRepository, config.Validate)
+	swipeUsecase := usecase.NewSwipeUsecase(config.DB, config.Log, matchRepository, swipeRepository, config.Validate)
 	userProfileUsecase := usecase.NewUserProfileUsecase(config.DB, config.Log, userProfileRepository, config.Validate)
 
 	// setup controller
 	authController := http.NewAuthController(authUsecase, config.Log)
+	swipeController := http.NewSwipeController(config.Log, swipeUsecase)
 	userProfileController := http.NewUserProfileController(config.Log, userProfileUsecase)
 
 	// setup middleware
@@ -40,6 +44,7 @@ func Bootstrap(config *BootstrapConfig) {
 		App:                   config.App,
 		AuthController:        authController,
 		AuthMiddleware:        authMiddleware,
+		SwipeController:       swipeController,
 		UserProfileController: userProfileController,
 	}
 	routeConfig.Setup()
