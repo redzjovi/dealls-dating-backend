@@ -26,6 +26,14 @@ This is the backend system for a Dating Mobile App using Golang and PostgreSQL.
 
 4. Open your browser and go to `http://localhost:8080` to see the application running.
 
+## Run Application
+
+### Run unit test
+
+```bash
+go test -v ./test/
+```
+
 ## License
 
 This project is licensed under the MIT License.

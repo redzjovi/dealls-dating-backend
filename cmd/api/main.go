@@ -1,6 +1,7 @@
 package main
 
 import (
+	"dealls-dating/internal/config"
 	"fmt"
 	"log"
 	"os"
@@ -9,16 +10,24 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
+	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
-	postgresHost := os.Getenv("POSTGRES_HOST")
-	postgresPort := os.Getenv("POSTGRES_PORT")
-	postgresUser := os.Getenv("POSTGRES_USER")
-	postgresPassword := os.Getenv("POSTGRES_PASSWORD")
-	postgresDb := os.Getenv("POSTGRES_DB")
+	log := config.NewLog()
 
-	fmt.Printf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", postgresHost, postgresPort, postgresUser, postgresPassword, postgresDb)
+	app := config.NewFiber()
+	db := config.NewDB(log)
+	validate := config.NewValidate()
+
+	config.Bootstrap(&config.BootstrapConfig{
+		App:      app,
+		DB:       db,
+		Log:      log,
+		Validate: validate,
+	})
+
+	if err := app.Listen(fmt.Sprintf(":%s", os.Getenv("API_PORT"))); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }

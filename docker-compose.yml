@@ -6,9 +6,21 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
+  migrate:
+    image: migrate/migrate
+    command: [
+      "-path", "/database/migration",
+      "-database", "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable",
+      "up"
+    ]
+    volumes:
+      - ./database/migration:/database/migration
+    depends_on:
+      - postgres
   pgadmin:
     image: dpage/pgadmin4
     restart: always
@@ -25,13 +37,14 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
+      API_PORT: ${API_PORT}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "8080:8080"
+      - "${API_PORT}:8080"
     depends_on:
       - postgres
     volumes:
