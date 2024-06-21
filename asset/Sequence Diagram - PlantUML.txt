@@ -1,0 +1,143 @@
+@startuml
+actor "User" as User
+participant "API Server" as API
+database "Database" as Database
+
+autonumber
+
+group Sign up
+  User -> API: Sign up
+  API -> Database: Check user by email
+  Database -> API: User response
+  alt user exist
+    API -> User: Conflict (409)
+  else user no exist
+    API -> Database: Create user
+  end
+  Database -> API: User created
+  API -> User: Sign up success (204)
+end
+
+group Login
+  User -> API: Login
+  API -> Database: Check user by credential
+  Database -> API: user response
+  alt user not exist
+    API -> User: Unauthorized (401)
+  else user exist
+    API -> Database: generate token
+    Database -> API: token response
+    API -> User: token response (200)
+  end
+end
+
+group View profile
+  User -> API: View profile
+  API -> Database: Check profile
+  Database -> API: profile response
+  alt profile empty
+    API -> User: Not found (404)
+  else profile exist
+    API -> User: profile response (200)
+  end
+end
+
+group Update profile
+  User -> API: Update profile
+  API -> Database: Check profile
+  Database -> API: Profile response
+  alt profile empty
+    API -> Database: Create profile
+    Database -> API: Profile created
+  else profile exist
+    API -> Database: Update profile
+    Database -> API: Profile updated
+  end
+  API -> User: Update profile success (204)
+end
+
+group Trial premium
+  User -> API: Trial premium
+  API -> Database: Check user have premium
+  Database -> API: premium response
+  alt premium exist
+    API -> User: Conflict (409)
+  else premium not exist
+    API -> Database: Add premium to user
+    Database -> API: premium response
+    API -> User: trial premium success (204)
+  end
+end
+
+group Find swipe
+  User -> API: Find swipe
+  API -> Database: Check profile
+  Database -> API: profile response
+  alt profile not exist
+    API -> User: Precondition failed (412)
+  else profile exist
+    API -> Database: Check available swipe user
+    Database -> API: Profile response
+    alt profile empty
+      API -> User: Not found (404)
+    else profile exist
+      API -> User: Profile response (200)
+    end
+  end
+end
+
+group Like swipe
+  User -> API: Like swipe
+  API -> Database: Check user is premium
+  Database -> API: Premium response
+  API -> Database: Check total daily swipe (like / dislike)
+  Database -> API: Total swipe response
+  alt not premium and daily swipe exceeded
+    API -> User: Too many requests (429)
+  else
+    API -> Database: Check swipe profile
+    Database -> API: Swipe response
+    alt swiped
+      API -> User: Conflict (409)
+    else not swiped
+      API -> Database: Like swipe
+      API -> Database: Check match
+      Database -> API: Match response
+      API -> User: Match response (200)
+    end 
+  end
+end
+
+group Dislike swipe
+  User -> API: Disike swipe
+  API -> Database: Check user is premium
+  Database -> API: Premium response
+  API -> Database: Check total daily swipe (like / dislike)
+  Database -> API: Total swipe response
+  alt not premium and daily swipe exceeded
+    API -> User: Too many requests (429)
+  else
+    API -> Database: Check swipe profile
+    Database -> API: Swipe response
+    alt swiped
+      API -> User: Conflict (409)
+    else not swiped
+      API -> Database: Dislike swipe
+      API -> User: Dislike swipe success (204)
+    end 
+  end
+end
+
+group Logout
+  User -> API: Logout
+  API -> Database: Check user by token
+  Database -> API: user response
+  alt user not exist
+    API -> User: Unauthorized (401)
+  else user exist
+    API -> Database: delete token
+    Database --> API: token deleted
+    API -> User: logout success (204)
+  end
+end
+@enduml

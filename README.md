@@ -34,6 +34,10 @@ This is the backend system for a Dating Mobile App using Golang and PostgreSQL.
 go test -v ./test/
 ```
 
+## Other
+
+- [DOCUMENT](DOCUMENT.md)
+
 ## License
 
 This project is licensed under the MIT License.
