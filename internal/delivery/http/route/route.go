@@ -7,9 +7,10 @@ import (
 )
 
 type RouteConfig struct {
-	App            *fiber.App
-	AuthController *http.AuthController
-	AuthMiddleware fiber.Handler
+	App                   *fiber.App
+	AuthController        *http.AuthController
+	AuthMiddleware        fiber.Handler
+	UserProfileController *http.UserProfileController
 }
 
 func (c *RouteConfig) Setup() {
@@ -25,4 +26,6 @@ func (c *RouteConfig) SetupGuestRoute() {
 func (c *RouteConfig) SetupAuthRoute() {
 	c.App.Use(c.AuthMiddleware)
 	c.App.Delete("/api/auth/user", c.AuthController.Logout)
+	c.App.Get("/api/auth/user/profile", c.UserProfileController.Find)
+	c.App.Put("/api/auth/user/profile", c.UserProfileController.Update)
 }

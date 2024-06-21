@@ -49,6 +49,89 @@
 								}
 							},
 							"response": []
+						},
+						{
+							"name": "Find Profile",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{authUserToken}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{apiUrl}}/auth/user/profile",
+									"host": [
+										"{{apiUrl}}"
+									],
+									"path": [
+										"auth",
+										"user",
+										"profile"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Profile",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{authUserToken}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"gender\": \"male\",\n    \"name\": \"{{$randomFullName}}\",\n    \"picture_url\": \"{{$randomAvatarImage}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{apiUrl}}/auth/user/profile",
+									"host": [
+										"{{apiUrl}}"
+									],
+									"path": [
+										"auth",
+										"user",
+										"profile"
+									]
+								}
+							},
+							"response": []
 						}
 					]
 				},
@@ -69,7 +152,7 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"if (pm.response.code === 201) {",
+									"if (pm.response.code === 204) {",
 									"    const b = JSON.parse(pm.request.toJSON().body.raw)",
 									"    pm.collectionVariables.set(\"authLoginEmail\", b.email)",
 									"}"
