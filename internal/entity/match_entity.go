@@ -9,3 +9,7 @@ type Match struct {
 	CreatedAt time.Time `gorm:"column:created_at"`
 	UpdatedAt time.Time `gorm:"column:updated_at"`
 }
+
+func (u *Match) TableName() string {
+	return "matches"
+}

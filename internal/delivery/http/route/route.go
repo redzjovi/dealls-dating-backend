@@ -11,6 +11,7 @@ type RouteConfig struct {
 	AuthController        *http.AuthController
 	AuthMiddleware        fiber.Handler
 	SwipeController       *http.SwipeController
+	UserPremiumController *http.UserPremiumController
 	UserProfileController *http.UserProfileController
 }
 
@@ -27,6 +28,8 @@ func (c *RouteConfig) SetupGuestRoute() {
 func (c *RouteConfig) SetupAuthRoute() {
 	c.App.Use(c.AuthMiddleware)
 	c.App.Delete("/api/auth/user", c.AuthController.Logout)
+	c.App.Get("/api/auth/user/premium", c.UserPremiumController.List)
+	c.App.Post("/api/auth/user/premium", c.UserPremiumController.Trial)
 	c.App.Get("/api/auth/user/profile", c.UserProfileController.Find)
 	c.App.Put("/api/auth/user/profile", c.UserProfileController.Update)
 	c.App.Get("/api/auth/user/swipe", c.SwipeController.Find)

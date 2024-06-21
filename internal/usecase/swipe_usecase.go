@@ -18,6 +18,7 @@ type SwipeUsecase struct {
 	Log                   *logrus.Logger
 	matchRepository       *repository.MatchRepository
 	swipeRepository       *repository.SwipeRepository
+	userPremiumRepository *repository.UserPremiumRepository
 	userProfileRepository *repository.UserProfileRepository
 	Validate              *validator.Validate
 }
@@ -27,14 +28,17 @@ func NewSwipeUsecase(
 	log *logrus.Logger,
 	matchRepository *repository.MatchRepository,
 	swipeRepository *repository.SwipeRepository,
+	userPremiumRepository *repository.UserPremiumRepository,
+	userProfileRepository *repository.UserProfileRepository,
 	validate *validator.Validate,
 ) *SwipeUsecase {
 	return &SwipeUsecase{
-		DB:              db,
-		Log:             log,
-		matchRepository: matchRepository,
-		swipeRepository: swipeRepository,
-		Validate:        validate,
+		DB:                    db,
+		Log:                   log,
+		matchRepository:       matchRepository,
+		swipeRepository:       swipeRepository,
+		userProfileRepository: userProfileRepository,
+		Validate:              validate,
 	}
 }
 
@@ -42,10 +46,18 @@ func (u *SwipeUsecase) Dislike(ctx context.Context, userId uint, swipeUserId uin
 	tx := u.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
+	totalPremium, err := u.userPremiumRepository.CountByUserIdAndNow(tx, userId)
+	if err != nil {
+		u.Log.Warnf("Failed count user premium by user id and now : %+v", err)
+		return fiber.ErrInternalServerError
+	}
+
 	totalSwiped, err := u.swipeRepository.CountByUserIdAndDate(tx, userId, time.Now())
 	if err != nil {
 		return fiber.ErrInternalServerError
-	} else if totalSwiped >= 10 {
+	}
+
+	if totalPremium == 0 && totalSwiped >= 10 {
 		return fiber.ErrTooManyRequests
 	}
 
@@ -113,10 +125,18 @@ func (u *SwipeUsecase) Like(ctx context.Context, userId uint, swipeUserId uint) 
 	tx := u.DB.WithContext(ctx).Begin()
 	defer tx.Rollback()
 
+	totalPremium, err := u.userPremiumRepository.CountByUserIdAndNow(tx, userId)
+	if err != nil {
+		u.Log.Warnf("Failed count user premium by user id and now : %+v", err)
+		return nil, fiber.ErrInternalServerError
+	}
+
 	totalSwiped, err := u.swipeRepository.CountByUserIdAndDate(tx, userId, time.Now())
 	if err != nil {
 		return nil, fiber.ErrInternalServerError
-	} else if totalSwiped >= 10 {
+	}
+
+	if totalPremium == 0 && totalSwiped >= 10 {
 		return nil, fiber.ErrTooManyRequests
 	}
 

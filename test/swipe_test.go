@@ -90,6 +90,25 @@ func TestLikeSwipeTooManyRequests(t *testing.T) {
 	}
 }
 
+func TestLikeSwipePremium(t *testing.T) {
+	ClearAll()
+	userProfiles := CreateUserProfiles(t, 11)
+	CreateUserPremium(t)
+	user12 := GetLastUser(t)
+
+	for _, userProfile := range userProfiles {
+		request := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/auth/user/swipe/%v", userProfile.UserId), nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("Accept", "application/json")
+		request.Header.Set("Authorization", user12.Token)
+
+		response, err := app.Test(request)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+	}
+}
+
 func TestLikeSwipeConflict(t *testing.T) {
 	ClearAll()
 	CreateUserProfiles(t, 2)
@@ -203,6 +222,25 @@ func TestDisLikeSwipeTooManyRequests(t *testing.T) {
 		} else {
 			assert.Equal(t, http.StatusNoContent, response.StatusCode)
 		}
+	}
+}
+
+func TestDisLikeSwipePremium(t *testing.T) {
+	ClearAll()
+	userProfiles := CreateUserProfiles(t, 11)
+	CreateUserPremium(t)
+	user := GetLastUser(t)
+
+	for _, userProfile := range userProfiles {
+		request := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/auth/user/swipe/%v", userProfile.UserId), nil)
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("Accept", "application/json")
+		request.Header.Set("Authorization", user.Token)
+
+		response, err := app.Test(request)
+		assert.Nil(t, err)
+
+		assert.Equal(t, http.StatusNoContent, response.StatusCode)
 	}
 }
 
