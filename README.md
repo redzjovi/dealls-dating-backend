@@ -31,7 +31,8 @@ This is the backend system for a Dating Mobile App using Golang and PostgreSQL.
 ### Run unit test
 
 ```bash
-go test -v ./test/
+go test ./... -coverprofile=./temp/coverage.out
+go tool cover -html=./temp/coverage.out
 ```
 
 ## Other
